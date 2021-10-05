@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from pycs.CameraCanvas import CameraCanvas
+from pycs.CameraCanvas import CanvasCamera
 from pycs.WorldModel import WorldModel
 from tkinter import PhotoImage
 from PIL import Image, ImageTk
@@ -9,7 +9,7 @@ class ConstructionSetApp:
     def __init__(self):
 
         self.WIDTH, self.HEIGHT = sg.Window.get_screen_size()
-        self.CANVAS_PROP = 0.7
+        self.CANVAS_PROP = 0.95
         self.OUTPUT_PROP = 0.2
 
         sg.theme('DarkAmber')
@@ -28,7 +28,7 @@ class ConstructionSetApp:
         self.layout = [
                   [sg.MenubarCustom(self.top_menu, tearoff=False)],
                   [sg.Canvas(size=(self.WIDTH, self.HEIGHT * self.CANVAS_PROP), key='canvas', background_color='white')],
-                  [sg.Output(size=(self.WIDTH, self.HEIGHT * self.OUTPUT_PROP), echo_stdout_stderr=True)],
+#                  [sg.Output(size=(self.WIDTH, self.HEIGHT * self.OUTPUT_PROP), echo_stdout_stderr=True)],
                   ]
 
         # Window
@@ -45,18 +45,42 @@ class ConstructionSetApp:
         self.root = self.window.TKroot
         self.window_canvas = self.window['canvas']
         self.canvas = self.window_canvas.TKCanvas
+        WIN_W, WIN_H = self.window.size
+
+        # Fix sizes
+        self.window_canvas.set_size((int(WIN_W),int(WIN_H) * self.CANVAS_PROP))
 
 
-        self.gif1 = ImageTk.PhotoImage(Image.open('nicholas-taggart-wfp-dragon.gif').resize((100,100)))
-        self.image = self.canvas.create_image(0, 0, image=self.gif1, anchor="nw")
+        # Get data
+        self.wm = WorldModel()
+
+        # TODO: make image picker object
+        # Set image focused
+        self.focused_image = 0
+#        self.picker_offset_x = self.root.winfo_pointerx()
+#        self.picker_offset_y = self.root.winfo_pointery()
+        self.clicker_origin_x = None
+        self.clicker_origin_y = None
+        self.picked_up = False
+        self.highlight = self.canvas.create_rectangle(0, 0, 0, 0, outline='red', width=10)
+
+        # Initialize all images on the canvas
+        self.canvas_images = []
+        self.photo_images = []
+        for ent in self.wm.entities:
+            tmpgif = ImageTk.PhotoImage(Image.open(ent.png).resize((ent.w, ent.h)))
+            self.photo_images.append(tmpgif)
+            self.canvas_images.append(self.canvas.create_image(ent.x, ent.y, image=tmpgif, anchor="nw"))
+        
+        # Get camera
+        self.camera = CanvasCamera(self.WIDTH * self.CANVAS_PROP, self.HEIGHT * self.CANVAS_PROP)
 
         # Canvas bindings, have to be directly to the Tk object or wont work
-        # Probably we should rap a reference to this with functionality
-    #    canvas.TKCanvas.bind('<Motion>', get_coordinates)
 
-        self.picked_up = False
         def click_m1(event):
             self.picked_up = True
+            self.clicker_origin_x = self.root.winfo_pointerx()
+            self.clicker_origin_y = self.root.winfo_pointery()
             print("\t CLICK", event)
 
         def release_m1(event):
@@ -64,11 +88,52 @@ class ConstructionSetApp:
             if self.picked_up:
                 print("moving!")
                 self.picked_up = False
+                self.picker_offset_x = 0
+                self.picker_offset_y = 0
             print("\t RELEASE", event)
+
+        def select_next_image(event):
+            if self.focused_image < len(self.canvas_images) - 1:
+                self.select_image(self.focused_image + 1)
+            else:
+                self.select_image(0)
+
+        def bring_forward(event):
+            self.canvas.lift(self.highlight)
+            self.canvas.lift(self.canvas_images[self.focused_image])
+    
+        def send_backward(event):
+            self.canvas.lower(self.canvas_images[self.focused_image])
+            self.canvas.lower(self.highlight)
 
         self.canvas.bind('<Button-1>', click_m1)
         self.canvas.bind("<ButtonRelease-1>",release_m1)
+        self.canvas.bind('<Tab>', select_next_image)
         self.window.bind('<Configure>',"Configure")
+        self.canvas.bind('<Up>', bring_forward)
+        self.canvas.bind('<Down>', send_backward)
+
+    def highlight(self, image_n):
+        x, y = self.canvas.coords(self.canvas_images[self.focused_image])
+        self.move_highlight(x, y,
+                           x + self.photo_images[self.focused_image].width(), 
+                           y + self.photo_images[self.focused_image].height())
+
+
+    def select_image(self, n):
+        self.focused_image = n
+        self.picked_up = True
+        x, y = self.canvas.coords(self.canvas_images[self.focused_image])
+        print(x, y)
+        self.canvas.coords(self.canvas_images[self.focused_image], x, y)
+#        self.move_highlight(x, y, 
+        self.move_highlight(x, y,
+                           x + self.photo_images[self.focused_image].width(), 
+                           y + self.photo_images[self.focused_image].height())
+
+
+    def move_highlight(self, x1, y1, x2, y2):
+        self.canvas.coords(self.highlight, x1, y1, x2, y2)       
 
     def second_window(self):
         layout = [
@@ -79,14 +144,30 @@ class ConstructionSetApp:
         event, values = window.read()
         window.close()
 
-    def main(self):
+    def start(self):
+        # Main loop
 
         # Main loop
         while True:
             if self.picked_up:
-                x = self.root.winfo_pointerx() - self.root.winfo_rootx() - self.gif1.width()
-                y = self.root.winfo_pointery() - self.root.winfo_rooty() - self.gif1.height()
-                self.canvas.moveto(self.image, x, y)
+                # tmp
+                photo_image = self.photo_images[self.focused_image]
+                canvas_image = self.canvas_images[self.focused_image]
+
+#                x = self.root.winfo_pointerx() - self.root.winfo_rootx() - photo_image.width()
+#                y = self.root.winfo_pointery() - self.root.winfo_rooty() - photo_image.height()
+                dx = - (self.clicker_origin_x - self.root.winfo_pointerx())
+                dy = - (self.clicker_origin_y - self.root.winfo_pointery())
+                self.clicker_origin_x = self.root.winfo_pointerx()
+                self.clicker_origin_y = self.root.winfo_pointery()
+                x, y = self.canvas.coords(canvas_image)
+
+                self.canvas.moveto(canvas_image, x + dx, y + dy)
+                x, y = self.canvas.coords(canvas_image)
+                
+                self.canvas.coords(self.highlight, x, y, 
+                                    x + self.photo_images[self.focused_image].width(), 
+                                    y + self.photo_images[self.focused_image].height())
                 
             WIN_W, WIN_H = self.window.size
 
@@ -116,4 +197,4 @@ class ConstructionSetApp:
 
 
 if __name__ == "__main__":
-    ConstructionSetApp().main()
+    ConstructionSetApp().start()
