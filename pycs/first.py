@@ -57,6 +57,7 @@ class ConstructionSetApp:
         # TODO: make image picker object
         # Set image focused
         self.focused_image = 0
+        self.tab_counter = 0
 #        self.picker_offset_x = self.root.winfo_pointerx()
 #        self.picker_offset_y = self.root.winfo_pointery()
         self.clicker_origin_x = None
@@ -93,10 +94,13 @@ class ConstructionSetApp:
             print("\t RELEASE", event)
 
         def select_next_image(event):
-            if self.focused_image < len(self.canvas_images) - 1:
-                self.select_image(self.focused_image + 1)
-            else:
-                self.select_image(0)
+            near = self.find_near(self.root.winfo_pointerx(), self.root.winfo_pointery())
+            self.tab_counter += 1
+            if self.tab_counter > len(near) - 1:
+                self.tab_counter = 0
+            self.focused_image = near[self.tab_counter]
+            print("focusing", self.focused_image)
+            self.select_image(self.focused_image)
 
         def bring_forward(event):
             self.canvas.lift(self.highlight)
@@ -112,6 +116,16 @@ class ConstructionSetApp:
         self.window.bind('<Configure>',"Configure")
         self.canvas.bind('<Up>', bring_forward)
         self.canvas.bind('<Down>', send_backward)
+
+    def find_nearest(self, x, y):
+        found = self.canvas.find_closest(x, y, halo=2, start=0)
+        return found[0]
+
+    def find_near(self, x, y, halo=50):
+        found = self.canvas.find_overlapping(x - halo, y - halo, x + halo, y + halo)
+        print(found)
+        return found
+
 
     def highlight(self, image_n):
         x, y = self.canvas.coords(self.canvas_images[self.focused_image])
