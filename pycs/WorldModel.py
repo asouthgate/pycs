@@ -50,7 +50,7 @@ class WorldModel:
     def __init__(self):
 
         self.world_objects = []
-        for j in range(100):
+        for j in range(10):
             size = random.randint(20,100) 
             self.world_objects.append(WorldObject('Dragon', 'tmp_gif.gif', random.randint(0,1000), random.randint(0,500), size, size))
 
@@ -89,4 +89,16 @@ class WorldModel:
 #                print("found somethin close!", wi)
                 res.append((wi, dr))
         return [t[0] for t in sorted(res, key=lambda x:x[1])]
-        
+
+    def find_nearest(self, x, y):
+        res = []
+        for wi, wo in enumerate(self.world_objects):
+            # taxicab
+            dr = math.fabs(wo.x + ( wo.w / 2 ) - x) + math.fabs(wo.y + ( wo.h / 2) - y)
+            print(wo.x, wo.y, dr)
+            res.append((wi, wo.x, wo.y, dr))
+        mini = min(res, key=lambda x:x[3])
+        print("finding nearest", x, y, mini)
+        return mini[0]
+
+
