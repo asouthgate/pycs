@@ -47,12 +47,16 @@ class WorldModel:
         world_objects:
     """
 
-    def __init__(self):
+    def __init__(self, json_fpath):
 
         self.world_objects = []
-        for j in range(10):
-            size = random.randint(20,100) 
-            self.world_objects.append(WorldObject('Dragon', 'tmp_gif.gif', random.randint(0,1000), random.randint(0,500), size, size))
+        with open(json_fpath) as json_file:
+            data = json.load(json_file)
+    
+            for obj in data['objects']:
+                wo = WorldObject(obj['name'], obj['filename'], *obj['v'], obj['w'], obj['h'])
+
+                self.world_objects.append(wo)
 
     def __inter__(self):
         for ent in self.world_objects:
