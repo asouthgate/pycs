@@ -1,29 +1,61 @@
 import json
 import random
+import math
 from PIL import ImageTk
 
 class WorldObject:
+    """
+    An entity; used to define data associated with any object in the world model.
+
+    Attributes:
+        name:
+        png:
+        v:
+        w:
+        h:
+    """
+
     def __init__(self, name, png, x, y, w, h):
         self.name = name
         self.png = png
-        self.x = x
-        self.y = y
+        self.v = [x, y]
         self.w = w
         self.h = h        
+        self.initialized = True
+
+    @property
+    def x(self):
+        return self.v[0]
+    
+    @x.setter
+    def x(self, u):
+        self.v[0] = u
+
+    @property
+    def y(self):
+        return self.v[1]
+        
+    @y.setter
+    def y(self, u):
+        self.v[1] = u
 
 class WorldModel:
+    """
+    A model of the world.
+
+    Attributes:
+        world_objects:
+    """
 
     def __init__(self):
-#        self.gif1 = ImageTk.PhotoImage(Image.open('nicholas-taggart-wfp-dragon.gif').resize((100,100)))
-#        self.image = self.canvas.create_image(0, 0, image=self.gif1, anchor="nw")
 
-        self.entities = []
+        self.world_objects = []
         for j in range(100):
             size = random.randint(20,100) 
-            self.entities.append(WorldObject('Dragon', 'tmp_gif.gif', random.randint(0,1000), random.randint(0,500), size, size))
+            self.world_objects.append(WorldObject('Dragon', 'tmp_gif.gif', random.randint(0,1000), random.randint(0,500), size, size))
 
     def __inter__(self):
-        for ent in self.entities:
+        for ent in self.world_objects:
             yield ent
 
     def __getitem__(self, x):
@@ -35,8 +67,26 @@ class WorldModel:
     def _index(self):
         # fast spatial index for retrieving objects
         pass
+    
+    def update_object_x(self, i, new_x):
+        self.world_objects[i].x = new_x
+    
+    def update_object_y(self, i, new_y):
+        self.world_objects[i].y = new_y
         
     def query(self, v_ul, v_br):
         # query for objects in box between v_ul and v_br
         pass
+
+    def find_near(self, x, y, r=300):
+        print("querying near", x, y, r)
+        res = []
+        for wi, wo in enumerate(self.world_objects):
+#            print(wi, wo.v)
+            # taxicab
+            dr = math.fabs(wo.x - x) + math.fabs(wo.y - y)
+            if dr < r:
+#                print("found somethin close!", wi)
+                res.append((wi, dr))
+        return [t[0] for t in sorted(res, key=lambda x:x[1])]
         
