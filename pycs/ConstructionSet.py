@@ -32,6 +32,8 @@ class ImageSelector:
             self.tab_counter += ( 1 * mod )
             if self.tab_counter > len(l) - 1:
                 self.tab_counter = 0
+            if self.tab_counter < 0:
+                self.tab_counter = len(l) - 1
             choice = l[self.tab_counter]
             self.select_image(choice)
             return self.focused_image
