@@ -3,13 +3,14 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../"))
 
-from pycs.WorldModel import WorldModel
+from pycs.LocalWorldModel import LocalWorldModel
 from pycs.ConstructionSet import ConstructionSetApp
+from pycs.ImageCollection import ImageCollection
 
 if __name__ == "__main__":
     json_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "./test_data/test_data.json")
-    print(json_file)
 
-    wm = WorldModel(json_file)
-    cs = ConstructionSetApp(wm)
-    cs.start()
+    with LocalWorldModel(json_file) as wm:
+        ic = ImageCollection()
+        cs = ConstructionSetApp(wm, ic)
+        cs.start()
