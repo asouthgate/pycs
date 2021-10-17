@@ -1,7 +1,24 @@
 import json
 import random
 import math
+from abc import ABC, abstractmethod
 from PIL import ImageTk
+
+class WorldModel(ABC):
+    @abstractmethod
+    def __iter__(self): pass
+    @abstractmethod
+    def __getitem__(self): pass
+    @abstractmethod
+    def __setitem__(self): pass
+    @abstractmethod
+    def __enter__(self): pass
+    @abstractmethod
+    def __exit__(self): pass
+    @abstractmethod
+    def update_object_x(self): pass
+    @abstractmethod
+    def update_object_y(self): pass    
 
 class WorldObject:
     """
@@ -39,9 +56,9 @@ class WorldObject:
     def y(self, u):
         self.v[1] = u
 
-class WorldModel:
+class LocalWorldModel(WorldObject):
     """
-    A model of the world.
+    A model of the world in local memory, stored in json.
 
     Attributes:
         world_objects:
@@ -58,7 +75,13 @@ class WorldModel:
 
                 self.world_objects.append(wo)
 
-    def __inter__(self):
+    def __enter__(self):
+        pass
+
+    def __exit__(self):
+        pass
+
+    def __iter__(self):
         for ent in self.world_objects:
             yield ent
 
