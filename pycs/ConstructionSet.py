@@ -1,5 +1,5 @@
 import PySimpleGUI as sg
-from pycs.CameraCanvas import CanvasCamera
+from pycs.CanvasCamera import CanvasCamera
 from pycs.WorldModel import WorldModel
 from tkinter import PhotoImage
 from PIL import Image, ImageTk
