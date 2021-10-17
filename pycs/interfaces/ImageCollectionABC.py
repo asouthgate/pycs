@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class ImageViewer(ABC):
+class ImageCollectionABC(ABC):
 
     @abstractmethod
     def pan(self):

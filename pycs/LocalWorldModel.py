@@ -2,7 +2,7 @@ import json
 import random
 import math
 from PIL import ImageTk
-from pycs.interfaces import WorldModelABC
+from pycs.interfaces.WorldModelABC import WorldModelABC
 
 class WorldObject:
     """
@@ -60,7 +60,7 @@ class LocalWorldModel(WorldModelABC):
                 self.world_objects.append(wo)
 
     def __enter__(self):
-        pass
+        return self
 
     def __exit__(self):
         pass
