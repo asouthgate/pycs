@@ -1,8 +1,14 @@
 import json
 import random
 import math
+import traceback
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("cs." + __name__)
+
 from PIL import ImageTk
 from pycs.interfaces.WorldModelABC import WorldModelABC
+from pycs.interfaces.DataLoaderABC import DataLoaderABC
 
 class WorldObject:
     """
@@ -48,22 +54,22 @@ class LocalWorldModel(WorldModelABC):
         world_objects:
     """
 
-    def __init__(self, json_fpath):
+    def __init__(self, data_loader):
 
         self.world_objects = []
-        with open(json_fpath) as json_file:
-            data = json.load(json_file)
-    
-            for obj in data['objects']:
-                wo = WorldObject(obj['name'], obj['filename'], *obj['v'], obj['w'], obj['h'])
-
+        with data_loader as dl:
+            for obj in dl:
+                logger.debug("creating object %s with data x=%d y=%d w=%d h=%d" % (obj.name, *obj.v, obj.w, obj.h))
+                wo = WorldObject(obj.name, obj.filename, *obj.v, obj.w, obj.h)
                 self.world_objects.append(wo)
 
     def __enter__(self):
         return self
 
-    def __exit__(self):
-        pass
+    def __exit__(self, type, value, tb):
+        if tb:
+            print("".join(traceback.format_tb(tb)), type, value)
+        return self
 
     def __iter__(self):
         for ent in self.world_objects:
@@ -90,26 +96,24 @@ class LocalWorldModel(WorldModelABC):
         pass
 
     def find_near(self, x, y, r=300):
-        print("querying near", x, y, r)
+        logging.debug("querying near %d %d %d" % (x, y, r))
         res = []
         for wi, wo in enumerate(self.world_objects):
-#            print(wi, wo.v)
             # taxicab
             dr = math.fabs(wo.x - x) + math.fabs(wo.y - y)
             if dr < r:
-#                print("found somethin close!", wi)
                 res.append((wi, dr))
         return [t[0] for t in sorted(res, key=lambda x:x[1])]
 
     def find_nearest(self, x, y):
+        logging.debug("querying nearest %d %d" % (x, y))
         res = []
         for wi, wo in enumerate(self.world_objects):
             # taxicab
             dr = math.fabs(wo.x + ( wo.w / 2 ) - x) + math.fabs(wo.y + ( wo.h / 2) - y)
-            print(wo.x, wo.y, dr)
             res.append((wi, wo.x, wo.y, dr))
         mini = min(res, key=lambda x:x[3])
-        print("finding nearest", x, y, mini)
+        logging.debug("found %d nearest!" % mini[0])
         return mini[0]
 
 

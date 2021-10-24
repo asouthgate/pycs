@@ -1,14 +1,15 @@
 import PySimpleGUI as sg
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("cs." + __name__)
+
 from pycs.interfaces.WorldModelABC import WorldModelABC
 from pycs.CanvasImageViewer import CanvasImageViewer
-from pycs.ImageSelector import ImageSelector
-from tkinter import PhotoImage
-from PIL import Image, ImageTk
 
 class ConstructionSetApp:
 
-    def __init__(self, wm: WorldModelABC, iv: ImageCollectionABC):
-        print(wm)
+    def __init__(self, wm: WorldModelABC):
 
         self.WIDTH, self.HEIGHT = sg.Window.get_screen_size()
         self.CANVAS_PROP = 0.95
@@ -30,7 +31,6 @@ class ConstructionSetApp:
         self.layout = [
                   [sg.MenubarCustom(self.top_menu, tearoff=False)],
                   [sg.Canvas(size=(self.WIDTH, self.HEIGHT * self.CANVAS_PROP), key='canvas', background_color='white')],
-#                  [sg.Output(size=(self.WIDTH, self.HEIGHT * self.OUTPUT_PROP), echo_stdout_stderr=True)],
                   ]
 
         # Window
@@ -58,69 +58,59 @@ class ConstructionSetApp:
         # Get data
         self.wm = wm
 
-        # Setup image viewer
-        self.image_selector = ImageSelector()
-
-        # TODO: move logic to imageviewer
-        # Define a highlight object
-        self.highlight = self.canvas.create_rectangle(0, 0, 0, 0, outline='red', width=10)
+        # Create an image viewer to manipulate images on the canvas
+        self.image_viewer = CanvasImageViewer(self.canvas, 0, 0)
 
         # Create object to store image data 
         # Create object to store index between canvas image and world model
-        self.photo_images = []
         self.wi2ci = {} 
         self.ci2wi = {}
         for wi, ent in enumerate(wm.world_objects):
-            tmpgif = ImageTk.PhotoImage(Image.open(ent.png).resize((ent.w, ent.h)))
-            self.photo_images.append(tmpgif)
-#            ci = self.canvas.create_image(ent.x + self.canvasx0, ent.y + self.canvasy0, image=tmpgif, anchor="nw")
-            ci = self.canvas.create_image(ent.x, ent.y, image=tmpgif, anchor="nw")
+            logger.debug("adding entity with dimensions %d %d %d %d" % (ent.x, ent.y, ent.w, ent.h))
+            ci = self.image_viewer.add_image(ent.x, ent.y, ent.w, ent.h, ent.png, anchor="nw")
             self.wi2ci[wi] = ci 
             self.ci2wi[ci] = wi
 
-        # Canvas bindings, have to be directly to the Tk object or wont work
+        # Input config
+        self.m1_depressed = False
 
+        # Canvas bindings, have to be directly to the Tk object or wont work
         def click_m1(event):
-            print(event)
+            logger.debug(event)
+            self.m1_depressed = True
             x, y = event.x, event.y
-            print("canvasa winfo vs!", self.canvas.winfo_pointerx(), self.root.winfo_pointerx())
-            self.image_selector.click(self.root.winfo_pointerx(), self.root.winfo_pointery())
-            nearest = self.wi2ci[self.wm.find_nearest(x, y)]
-            self.image_selector.select_image(nearest)
-            
+            self.image_viewer.click(self.root.winfo_pointerx(), self.root.winfo_pointery())
+            nearest = self.wm.find_nearest(x, y)
+            self.image_viewer.select_image(nearest) 
 
         def release_m1(event):
-            self.image_selector.release()
+            self.m1_depressed = False
+            self.image_viewer.release()
 
         def bring_forward(event):
-            self.canvas.lift(self.highlight)
-            self.canvas.lift(self.image_selector.focused_image)
+            # TODO: z index needs to be defined by the worldmodel
+            logger.debug("bringing object forward")
+#            self.canvas.lift(self.highlight)
+#            self.canvas.lift(self.image_selector.focused_image)
     
         def send_backward(event):
-            self.canvas.lower(self.image_selector.self.focused_image)
-            self.canvas.lower(self.highlight)
+            # TODO: z index needs to be defined by the worldmodel
+            logger.debug("sending object backwarwd")
+#            self.canvas.lower(self.image_selector.self.focused_image)
+#            self.canvas.lower(self.highlight)
 
         def tab_func(event):
             x, y = event.x, event.y
-            print("PRESSTATE", event.state, event.keysym)
-            if event.state == "Shift":
-                print("AHHHHHHHHHHHHSHIFT")
-            print("pressed tab", self.root.winfo_pointerx(), self.canvasx0, self.root.winfo_pointerx() - self.canvasx0)
             near = self.wm.find_near(x, y)
-            cnear = [self.wi2ci[i] for i in near]
-            self.image_selector.select_next_image(cnear, x, y)
-            self.move_highlight_to_image(self.image_selector.focused_image)
+            self.image_viewer.select_next_image(near, x, y)
 
         def shift_tab_func(event):
             x, y = event.x, event.y
-            print("pressed tab", self.root.winfo_pointerx(), self.canvasx0, self.root.winfo_pointerx() - self.canvasx0)
             near = self.wm.find_near(x, y)
-            cnear = [self.wi2ci[i] for i in near]
-            self.image_selector.select_prev_image(cnear, x, y)
-            self.move_highlight_to_image(self.image_selector.focused_image)
+            self.image_viewer.select_prev_image(near, x, y)
 
         def debug(event):
-            print(event)
+            logger.debug(event)
 
         self.canvas.bind('<KeyPress>', debug)
         self.canvas.bind('<Button-1>', click_m1)
@@ -135,26 +125,14 @@ class ConstructionSetApp:
         found = self.canvas.find_closest(x, y, halo=2, start=0)
         return found[0]
 
-    def move_highlight_to_image(self, image_n):
-        # rename function if it selects and highlights
-        coords = self.canvas.coords(image_n)
-        print("moving highlight to image", image_n, "at",  coords)
-        x, y = coords
-        self.move_highlight(x, y,
-                           x + self.photo_images[self.ci2wi[self.image_selector.focused_image]].width(), 
-                           y + self.photo_images[self.ci2wi[self.image_selector.focused_image]].height())
-
 
     def select_image(self, n):
         self.image_selector.select_image(n)
-        print("!!", n)
+        logger.debug("!!", n)
         x, y = self.canvas.coords(n)
         self.move_highlight(x, y,
                            x + self.photo_images[self.image_selector.focused_image].width(), 
                            y + self.photo_images[self.image_selector.focused_image].height())
-
-    def move_highlight(self, x1, y1, x2, y2):
-        self.canvas.coords(self.highlight, x1, y1, x2, y2)       
 
     def second_window(self):
         layout = [
@@ -165,52 +143,25 @@ class ConstructionSetApp:
         event, values = window.read()
         window.close()
 
-    def move_object(self):
-        photo_image = self.photo_images[self.ci2wi[self.image_selector.focused_image]]
-        canvas_image = self.image_selector.focused_image
-
-        currx = self.root.winfo_pointerx()
-        curry = self.root.winfo_pointery()
-
-        dx = - (self.image_selector.origin_x - currx)
-        dy = - (self.image_selector.origin_y - curry)
-
-        self.image_selector.origin_x = currx
-        self.image_selector.origin_y = curry
-        x, y = self.canvas.coords(canvas_image)
-
-        new_x = x + dx
-        new_y = y + dy
-
-        self.canvas.moveto(canvas_image, new_x, new_y)
-        x, y = self.canvas.coords(canvas_image)
-        
-        self.canvas.coords(self.highlight, x, y, 
-                            x + photo_image.width(), 
-                            y + photo_image.height())
-    
-        self.wm.update_object_x(self.ci2wi[self.image_selector.focused_image], new_x)
-        self.wm.update_object_y(self.ci2wi[self.image_selector.focused_image], new_y)
-
-
-
     def start(self):
-        # Main loop
 
         # Main loop
         while True:
-            if self.image_selector.picked_up:
+            if self.m1_depressed:
                 # tmp
-                self.move_object()
+                currx = self.root.winfo_pointerx()
+                curry = self.root.winfo_pointery() 
+                new_x, new_y = self.image_viewer.move_selected_image(currx, curry)
+                selected_image = self.image_viewer.get_selected()
+                self.wm.update_object_x(selected_image, new_x)
+                self.wm.update_object_y(selected_image, new_y)
+
                 
             WIN_W, WIN_H = self.window.size
 
             event, values = self.window.read()
             if event is None or event == 'Exit':
                 return
-            if event == "Motion":
-                print("Motion", event, values)
-                print("GOT MOTION", x, y)
             
             # Menu
             if event == 'About':
@@ -219,13 +170,10 @@ class ConstructionSetApp:
                 self.window.reappear()
             elif event == 'Open':
                 sfilename = sg.popup_get_file('file to open', no_window=True)
-    #            print(filename)
             elif event == 'Properties':
                 second_window()
             elif event == '-BMENU-':
                 pass
-    #            print('Button menu selection:', values['-BMENU-'])
             elif event == 'Configure':
-    #            print("config event, new size:", WIN_W, WIN_H)
                 self.window_canvas.set_size((int(WIN_W),int(WIN_H) * self.CANVAS_PROP))
 
