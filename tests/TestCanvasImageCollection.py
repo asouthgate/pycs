@@ -6,15 +6,15 @@ import json
 
 sys.path.append(os.path.join(os.path.realpath(__file__), ".."))
 
-from pycs.CanvasImageViewer import CanvasImageViewer
+from pycs.CanvasImageCollection import CanvasImageCollection
 from pycs.FileSystemDataLoader import FileSystemDataLoader
 
-class CanvasImagerViewerTester(unittest.TestCase):
+class CanvasImageCollectionTest(unittest.TestCase):
 
     def setUp(self):
         self.root = tkinter.Tk()
         self.canvas = tkinter.Canvas(self.root, width=500, height=500)
-        self.civ = CanvasImageViewer(self.canvas, 0, 0)
+        self.civ = CanvasImageCollection(self.canvas, 0, 0)
         # get some data
         data_loader = FileSystemDataLoader(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data/"))
         with data_loader as dl:

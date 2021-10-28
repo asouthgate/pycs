@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 from pycs.interfaces.ImageCollectionABC import ImageCollectionABC
 from pycs.ImageSelector import ImageSelector
 
-class CanvasImageViewer(ImageCollectionABC):
+class CanvasImageCollection(ImageCollectionABC):
 
     def __init__(self, canvas, x0, y0):
         self.x = x0
@@ -20,6 +20,10 @@ class CanvasImageViewer(ImageCollectionABC):
         self.photo_images = []
         self.pi2ci = []
         self.image_selector = ImageSelector()
+
+    @property
+    def focused_image(self):
+        return self.image_selector.focused_image
 
     def pan(self):
         pass
@@ -72,6 +76,7 @@ class CanvasImageViewer(ImageCollectionABC):
         self.image_selector.release()
 
     def select_next_image(self, cnear, x, y):
+        # TODO: what is cnear
         self.image_selector.select_next_image(cnear, x, y)
         self.move_highlight_to_selected_image()
 
@@ -86,6 +91,7 @@ class CanvasImageViewer(ImageCollectionABC):
     def add_image(self, x, y, w, h, png, anchor="nw"):
         tmpgif = ImageTk.PhotoImage(Image.open(png).resize((w, h)))
         self.photo_images.append(tmpgif)
+        logger.debug("creating image %s from %s" % (tmpgif, png))
         ci = self.canvas.create_image(x, y, image=tmpgif, anchor="nw")
         self.pi2ci.append(ci)
         return ci
