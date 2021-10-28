@@ -1,4 +1,5 @@
 import PySimpleGUI as sg
+import tkinter
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -15,7 +16,7 @@ class ConstructionSetApp:
         self.CANVAS_PROP = 0.95
         self.OUTPUT_PROP = 0.2
 
-        sg.theme('DarkAmber')
+        sg.theme('dark grey 13')
         sg.set_options(element_padding=(0, 0))
 
         # Menu
@@ -128,13 +129,13 @@ class ConstructionSetApp:
         return found[0]
 
 
-    def select_image(self, n):
-        self.image_selector.select_image(n)
-        logger.debug("!!", n)
-        x, y = self.canvas.coords(n)
-        self.move_highlight(x, y,
-                           x + self.photo_images[self.image_selector.focused_image].width(), 
-                           y + self.photo_images[self.image_selector.focused_image].height())
+#    def select_image(self, n):
+#        self.image_selector.select_image(n)
+#        logger.debug("!!", n)
+#        x, y = self.canvas.coords(n)
+#        self.move_highlight(x, y,
+#                           x + self.photo_images[self.image_selector.focused_image].width(), 
+#                           y + self.photo_images[self.image_selector.focused_image].height())
 
     def second_window(self):
         layout = [
@@ -172,6 +173,10 @@ class ConstructionSetApp:
                 self.window.reappear()
             elif event == 'Open':
                 sfilename = sg.popup_get_file('file to open', no_window=True)
+            elif event == 'Save':
+                sfilename = tkinter.filedialog.asksaveasfilename()
+                logger.debug("saving! %s" % sfilename)
+                pass
             elif event == 'Properties':
                 second_window()
             elif event == '-BMENU-':
