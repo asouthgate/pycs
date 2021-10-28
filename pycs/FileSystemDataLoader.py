@@ -16,7 +16,6 @@ class FileSystemDataLoader(DataLoaderABC):
     def __init__(self, root_path):
         self.root_path = root_path
         self.json_fpath = os.path.join(root_path, "data.json")
-        print(self.json_fpath)
         self.json_file = None
 
     def __enter__(self):
@@ -30,15 +29,12 @@ class FileSystemDataLoader(DataLoaderABC):
         return self
 
     def __iter__(self):
-        print("???")
         objects = [obj for obj in json.load(self.json_file)['objects']]
-        print(objects)
-        print("wtf")
         for obj in objects:
             obj['filename'] = os.path.join(self.root_path, obj['filename'])
             dr = DataResource(obj)
-            print(dr.__dict__)
             yield dr 
+
     def get(self, fname):
         return os.path.join(self.root_path, fname)
 
