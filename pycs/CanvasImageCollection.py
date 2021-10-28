@@ -31,6 +31,14 @@ class CanvasImageCollection(ImageCollectionABC):
     def zoom(self):
         pass
 
+    def lift_focused_image(self):
+        self.canvas.lift(self.highlight)
+        self.canvas.lift(self.pi2ci[self.image_selector.focused_image])
+
+    def lower_focused_image(self):
+        self.canvas.lower(self.pi2ci[self.image_selector.focused_image])
+        self.canvas.lower(self.highlight)
+
     def get_selected(self):
         return self.image_selector.focused_image
 
@@ -110,5 +118,6 @@ class CanvasImageCollection(ImageCollectionABC):
         self.move_highlight(x, y,
                            x + self.photo_images[photo_image_n].width(),
                            y + self.photo_images[photo_image_n].height())
+        self.canvas.tag_lower(self.highlight, self.pi2ci[photo_image_n])
 
 

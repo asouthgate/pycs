@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("cs." + __name__)
 
 from pycs.interfaces.WorldModelABC import WorldModelABC
-from pycs.CanvasImageViewer import CanvasImageViewer
+from pycs.CanvasImageCollection import CanvasImageCollection
 
 class ConstructionSetApp:
 
@@ -59,7 +59,7 @@ class ConstructionSetApp:
         self.wm = wm
 
         # Create an image viewer to manipulate images on the canvas
-        self.image_viewer = CanvasImageViewer(self.canvas, 0, 0)
+        self.image_collection = CanvasImageCollection(self.canvas, 0, 0)
 
         # Create object to store image data 
         # Create object to store index between canvas image and world model
@@ -67,7 +67,7 @@ class ConstructionSetApp:
         self.ci2wi = {}
         for wi, ent in enumerate(wm.world_objects):
             logger.debug("adding entity with dimensions %d %d %d %d" % (ent.x, ent.y, ent.w, ent.h))
-            ci = self.image_viewer.add_image(ent.x, ent.y, ent.w, ent.h, ent.png, anchor="nw")
+            ci = self.image_collection.add_image(ent.x, ent.y, ent.w, ent.h, ent.png, anchor="nw")
             self.wi2ci[wi] = ci 
             self.ci2wi[ci] = wi
 
@@ -79,35 +79,37 @@ class ConstructionSetApp:
             logger.debug(event)
             self.m1_depressed = True
             x, y = event.x, event.y
-            self.image_viewer.click(self.root.winfo_pointerx(), self.root.winfo_pointery())
+            self.image_collection.click(self.root.winfo_pointerx(), self.root.winfo_pointery())
             nearest = self.wm.find_nearest(x, y)
-            self.image_viewer.select_image(nearest) 
+            self.image_collection.select_image(nearest) 
 
         def release_m1(event):
             self.m1_depressed = False
-            self.image_viewer.release()
+            self.image_collection.release()
 
         def bring_forward(event):
-            # TODO: z index needs to be defined by the worldmodel
+            # TODO: z index needs to be defined by the worldmodel too
             logger.debug("bringing object forward")
+            self.image_collection.lift_focused_image()
 #            self.canvas.lift(self.highlight)
 #            self.canvas.lift(self.image_selector.focused_image)
     
         def send_backward(event):
-            # TODO: z index needs to be defined by the worldmodel
-            logger.debug("sending object backwarwd")
+            # TODO: z index needs to be defined by the worldmodel too
+            logger.debug("sending object backward")
+            self.image_collection.lower_focused_image()
 #            self.canvas.lower(self.image_selector.self.focused_image)
 #            self.canvas.lower(self.highlight)
 
         def tab_func(event):
             x, y = event.x, event.y
             near = self.wm.find_near(x, y)
-            self.image_viewer.select_next_image(near, x, y)
+            self.image_collection.select_next_image(near, x, y)
 
         def shift_tab_func(event):
             x, y = event.x, event.y
             near = self.wm.find_near(x, y)
-            self.image_viewer.select_prev_image(near, x, y)
+            self.image_collection.select_prev_image(near, x, y)
 
         def debug(event):
             logger.debug(event)
@@ -117,9 +119,9 @@ class ConstructionSetApp:
         self.canvas.bind("<ButtonRelease-1>",release_m1)
         self.canvas.bind('<Tab>', tab_func)
         self.canvas.bind('<ISO_Left_Tab>', shift_tab_func)
-        self.window.bind('<Configure>',"Configure")
         self.canvas.bind('<Up>', bring_forward)
         self.canvas.bind('<Down>', send_backward)
+        self.window.bind('<Configure>',"Configure")
 
     def find_nearest(self, x, y):
         found = self.canvas.find_closest(x, y, halo=2, start=0)
@@ -151,8 +153,8 @@ class ConstructionSetApp:
                 # tmp
                 currx = self.root.winfo_pointerx()
                 curry = self.root.winfo_pointery() 
-                new_x, new_y = self.image_viewer.move_selected_image(currx, curry)
-                selected_image = self.image_viewer.get_selected()
+                new_x, new_y = self.image_collection.move_selected_image(currx, curry)
+                selected_image = self.image_collection.get_selected()
                 self.wm.update_object_x(selected_image, new_x)
                 self.wm.update_object_y(selected_image, new_y)
 
