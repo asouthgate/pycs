@@ -138,6 +138,9 @@ class LocalWorldModel(WorldModelABC):
         wo = WorldObject(name, png_filename, x, y, w=w, h=h)
         self.add_world_object(wo)
         return wo
+
+    def delete_object(self, i):
+        self.world_objects = self.world_objects[:i] + self.world_objects[i+1:]
         
     def query(self, v_ul, v_br):
         # query for objects in box between v_ul and v_br

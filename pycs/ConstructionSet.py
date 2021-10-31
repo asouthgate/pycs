@@ -25,7 +25,7 @@ class ConstructionSetApp:
                     ['&Toolbar', ['---', 'Foo &1', 'Bar &2', '---', 'Baz &3', 'FooBaz &4']],
                     ['&Help', '&About'],]
 
-        self.right_click_menu = ['Unused', ['&New Object', '&Exit', 'Properties']]
+        self.right_click_menu = ['Unused', ['&New Object', '&Delete Object' '&Exit', 'Properties']]
 
 
         # GUI
@@ -83,6 +83,7 @@ class ConstructionSetApp:
             self.image_collection.click(self.root.winfo_pointerx(), self.root.winfo_pointery())
             nearest = self.wm.find_nearest(x, y)
             self.image_collection.select_image(nearest) 
+            # add to command history
 
         def release_m1(event):
             self.m1_depressed = False
@@ -92,15 +93,11 @@ class ConstructionSetApp:
             # TODO: z index needs to be defined by the worldmodel too
             logger.debug("bringing object forward")
             self.image_collection.lift_focused_image()
-#            self.canvas.lift(self.highlight)
-#            self.canvas.lift(self.image_selector.focused_image)
     
         def send_backward(event):
             # TODO: z index needs to be defined by the worldmodel too
             logger.debug("sending object backward")
             self.image_collection.lower_focused_image()
-#            self.canvas.lower(self.image_selector.self.focused_image)
-#            self.canvas.lower(self.highlight)
 
         def tab_func(event):
             x, y = event.x, event.y
@@ -124,6 +121,7 @@ class ConstructionSetApp:
 
         def save(event):
             self.wm.save()
+   
 
         self.canvas.bind('<KeyPress>', debug)
         self.canvas.bind('<Button-1>', click_m1)
@@ -204,6 +202,11 @@ class ConstructionSetApp:
                 tmp_image = self.image_collection.add_image(sfilename, x, y, anchor="nw")
                 tmpw, tmph = self.image_collection.get_image_dimensions(tmp_image)
                 wo = self.wm.new_world_object("test", sfilename, x, y, w=tmpw, h=tmph)
+            elif event == 'Delete Object':
+                i = self.image_collection.get_selected()
+                self.wm.delete_object(i)
+                self.image_collection.delete_object(i)
+                
             elif event == 'Properties':
                 second_window()
             elif event == '-BMENU-':
