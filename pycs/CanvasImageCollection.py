@@ -17,9 +17,11 @@ class CanvasImageCollection(ImageCollectionABC):
         self.y = y0
         self.canvas = canvas
         self.highlight = self.canvas.create_rectangle(0, 0, 0, 0, outline='red', width=10)
-        self.photo_images = []
-        self.pi2ci = []
+        self.photo_images = {}
+        self.pi2ci = {}
         self.image_selector = ImageSelector()
+
+        self._new_index = 0
 
     @property
     def focused_image(self):
@@ -45,12 +47,17 @@ class CanvasImageCollection(ImageCollectionABC):
     def get_selected(self):
         return self.image_selector.focused_image
 
+    def delete(self, i):
+        del self.photo_images[i]
+        self.canvas.delete(self.pi2ci[i])
+        del self.pi2ci[i]
+
     def move_selected_image(self, pointer_x, pointer_y):
         """ Move a selected image based on a difference. """
         photo_image_ind = self.image_selector.focused_image
         photo_image = self.photo_images[photo_image_ind]
         logger.debug("focused image is %s" % photo_image)
-        assert photo_image_ind < len(self.photo_images), "Photo image index greater than number of photo images - 1"
+#        assert photo_image_ind < len(self.photo_images), "Photo image index greater than number of photo images - 1"
         canvas_image = self.pi2ci[photo_image_ind]
 
         # Calculate the difference since the origin
@@ -78,7 +85,7 @@ class CanvasImageCollection(ImageCollectionABC):
         self.image_selector.click(x, y)
 
     def select_image(self, nearest):
-        assert nearest < len(self.photo_images), "Photo image index %d greater than number of photo images %d - 1" % (nearest, len(self.photo_images))
+#        assert nearest < len(self.photo_images), "Photo image index %d greater than number of photo images %d - 1" % (nearest, len(self.photo_images))
         self.image_selector.select_image(nearest)
         self.move_highlight_to_selected_image()
 
@@ -98,24 +105,30 @@ class CanvasImageCollection(ImageCollectionABC):
         """ Move an image. """
         pass
 
+    def get_new_index(self):
+        ni = self._new_index
+        self._new_index += 1
+        return ni
+
     def add_image(self, png, x, y, w=None, h=None, anchor="nw"):
         logger.debug("opening image %s" % (png))
         tmpimage = Image.open(png)
         if w and h:
             tmpimage = tmpimage.resize((w, h))
         tmppi = ImageTk.PhotoImage(tmpimage)
-        self.photo_images.append(tmppi)
+        new_ind = self.get_new_index()
+        self.photo_images[new_ind] = tmppi
         logger.debug("creating image %s from %s" % (tmppi, png))
         ci = self.canvas.create_image(x, y, image=tmppi, anchor="nw")
-        self.pi2ci.append(ci)
-        return len(self.photo_images) - 1
+        self.pi2ci[new_ind] = ci
+        return new_ind
 
     def move_highlight(self, x1, y1, x2, y2):
         self.canvas.coords(self.highlight, x1, y1, x2, y2)
 
     def move_highlight_to_selected_image(self):
         photo_image_n = self.image_selector.focused_image
-        assert photo_image_n < len(self.photo_images)
+#        assert photo_image_n < len(self.photo_images)
         # rename function if it selects and highlights
         coords = self.canvas.coords(self.pi2ci[photo_image_n])
         print("moving highlight to image", photo_image_n, "at",  coords)
