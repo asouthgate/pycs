@@ -20,12 +20,14 @@ class WorldObject(WorldObjectABC):
         name:
         png:
         v:
+
+    Optional args:
         w:
         h:
     """
 
-    def __init__(self, name, png, x, y, w, h):
-        self._name = name
+    def __init__(self, name, png, x, y, w=0, h=0):
+        self._name = str(name)
         self._png = png
         self._v = [x, y]
         self._w = w
@@ -111,15 +113,31 @@ class LocalWorldModel(WorldModelABC):
         # fast spatial index for retrieving objects
         pass
 
-    def save(self, fname):
+    def save(self, fname=None):
         logger.debug("saving world model!")
-        self.data_loader.write([wo.data_dict for wo in self.world_objects], fname)
+        self.data_loader.write([wo.data_dict for wo in self.world_objects], root_folder_name=fname)
     
     def update_object_x(self, i, new_x):
         self.world_objects[i].x = new_x
     
     def update_object_y(self, i, new_y):
         self.world_objects[i].y = new_y
+
+    def add_world_object(self, wo):
+        self.world_objects.append(wo)
+
+    def duplicate_world_object(self, i, x, y):
+        wo = self.world_objects[i]
+        name = wo.name + "_copy"
+        png = wo.png
+        w = wo.w
+        h = wo.h
+        return self.new_world_object(name, png, x, y, w=w, h=h)
+
+    def new_world_object(self, name, png_filename, x, y, w=None, h=None):
+        wo = WorldObject(name, png_filename, x, y, w=w, h=h)
+        self.add_world_object(wo)
+        return wo
         
     def query(self, v_ul, v_br):
         # query for objects in box between v_ul and v_br

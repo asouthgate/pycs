@@ -20,12 +20,12 @@ class ConstructionSetApp:
         sg.set_options(element_padding=(0, 0))
 
         # Menu
-        self.top_menu = [['&File', ['&Open', '&Save', '&Properties', 'E&xit' ]],
+        self.top_menu = [['&File', ['&Open', '&Save', '&Save As', '&Properties', 'E&xit' ]],
                     ['&Edit', ['&Paste', ['Special', 'Normal',], 'Undo'],],
                     ['&Toolbar', ['---', 'Foo &1', 'Bar &2', '---', 'Baz &3', 'FooBaz &4']],
                     ['&Help', '&About'],]
 
-        self.right_click_menu = ['Unused', ['!&Foo', '&Exit', 'Properties']]
+        self.right_click_menu = ['Unused', ['&New Object', '&Exit', 'Properties']]
 
 
         # GUI
@@ -68,7 +68,7 @@ class ConstructionSetApp:
         self.ci2wi = {}
         for wi, ent in enumerate(wm.world_objects):
             logger.debug("adding entity with dimensions %d %d %d %d" % (ent.x, ent.y, ent.w, ent.h))
-            ci = self.image_collection.add_image(ent.x, ent.y, ent.w, ent.h, ent.png, anchor="nw")
+            ci = self.image_collection.add_image(ent.png, ent.x, ent.y, ent.w, ent.h, anchor="nw")
             self.wi2ci[wi] = ci 
             self.ci2wi[ci] = wi
 
@@ -112,17 +112,33 @@ class ConstructionSetApp:
             near = self.wm.find_near(x, y)
             self.image_collection.select_prev_image(near, x, y)
 
+        def duplicate_object(event):
+            logger.debug("duplicating object")
+            x, y = event.x, event.y
+            i = self.image_collection.get_selected()
+            wo = self.wm.duplicate_world_object(i, x, y)
+            tmp_image = self.image_collection.add_image(wo.png, x, y, w=wo.w, h=wo.h, anchor="nw")
+
         def debug(event):
             logger.debug(event)
+
+        def save(event):
+            self.wm.save()
 
         self.canvas.bind('<KeyPress>', debug)
         self.canvas.bind('<Button-1>', click_m1)
         self.canvas.bind("<ButtonRelease-1>",release_m1)
         self.canvas.bind('<Tab>', tab_func)
         self.canvas.bind('<ISO_Left_Tab>', shift_tab_func)
+        self.canvas.bind('<KeyPress-D>', duplicate_object)
+        self.canvas.bind('<Control-KeyPress-s>', save)
         self.canvas.bind('<Up>', bring_forward)
         self.canvas.bind('<Down>', send_backward)
+#        self.window.bind('<KeyPress-D>', "")
         self.window.bind('<Configure>',"Configure")
+
+        self.canvas.focus_set()
+
 
     def find_nearest(self, x, y):
         found = self.canvas.find_closest(x, y, halo=2, start=0)
@@ -163,6 +179,7 @@ class ConstructionSetApp:
             WIN_W, WIN_H = self.window.size
 
             event, values = self.window.read()
+            print(event, values)
             if event is None or event == 'Exit':
                 return
             
@@ -174,11 +191,19 @@ class ConstructionSetApp:
             elif event == 'Open':
                 sfilename = sg.popup_get_file('file to open', no_window=True)
             elif event == 'Save':
+                self.wm.save()
+            elif event == 'Save As':
 #                sfilename = tkinter.filedialog.asksaveasfilename()
                 sfoldername = sg.popup_get_folder('folder to open', no_window=True)
-                if sfilename:
+                if sfoldername:
                     logger.debug("saving! %s" % sfoldername)
                     self.wm.save(sfoldername)
+            elif event == 'New Object':
+                sfilename = sg.popup_get_file('image file', no_window=True)
+                x, y = self.root.winfo_pointerx(), self.root.winfo_pointery()
+                tmp_image = self.image_collection.add_image(sfilename, x, y, anchor="nw")
+                tmpw, tmph = self.image_collection.get_image_dimensions(tmp_image)
+                wo = self.wm.new_world_object("test", sfilename, x, y, w=tmpw, h=tmph)
             elif event == 'Properties':
                 second_window()
             elif event == '-BMENU-':

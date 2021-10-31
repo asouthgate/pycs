@@ -20,8 +20,7 @@ class CanvasImageCollectionTest(unittest.TestCase):
         with data_loader as dl:
             for obj in dl:
                 sys.stderr.write("adding an image %s\n" % obj)
-                self.civ.add_image(*obj['v'], obj['w'], obj['h'], obj['filename'])
-
+                self.civ.add_image(obj['filename'], *obj['v'], obj['w'], obj['h']) 
     def tearDown(self):
         self.root.destroy()
 

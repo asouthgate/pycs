@@ -68,6 +68,8 @@ class FileSystemDataLoader(DataLoaderABC):
 
     def write(self, encodeables, root_folder_name=None):
         """ Write encodeable objects to JSON. """
+        if not root_folder_name:
+            root_folder_name = self.root_path
         if not os.path.isdir(root_folder_name):
 #            raise Exception("%s is not an extant folder." % root_folder_name)
             os.mkdir(root_folder_name)

@@ -38,6 +38,9 @@ class CanvasImageCollection(ImageCollectionABC):
     def lower_focused_image(self):
         self.canvas.lower(self.pi2ci[self.image_selector.focused_image])
         self.canvas.lower(self.highlight)
+        
+    def get_image_dimensions(self, i):
+        return self.photo_images[i].width(), self.photo_images[i].height()
 
     def get_selected(self):
         return self.image_selector.focused_image
@@ -95,13 +98,17 @@ class CanvasImageCollection(ImageCollectionABC):
         """ Move an image. """
         pass
 
-    def add_image(self, x, y, w, h, png, anchor="nw"):
-        tmpgif = ImageTk.PhotoImage(Image.open(png).resize((w, h)))
-        self.photo_images.append(tmpgif)
-        logger.debug("creating image %s from %s" % (tmpgif, png))
-        ci = self.canvas.create_image(x, y, image=tmpgif, anchor="nw")
+    def add_image(self, png, x, y, w=None, h=None, anchor="nw"):
+        logger.debug("opening image %s" % (png))
+        tmpimage = Image.open(png)
+        if w and h:
+            tmpimage = tmpimage.resize((w, h))
+        tmppi = ImageTk.PhotoImage(tmpimage)
+        self.photo_images.append(tmppi)
+        logger.debug("creating image %s from %s" % (tmppi, png))
+        ci = self.canvas.create_image(x, y, image=tmppi, anchor="nw")
         self.pi2ci.append(ci)
-        return ci
+        return len(self.photo_images) - 1
 
     def move_highlight(self, x1, y1, x2, y2):
         self.canvas.coords(self.highlight, x1, y1, x2, y2)
