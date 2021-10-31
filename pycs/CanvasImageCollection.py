@@ -66,10 +66,8 @@ class CanvasImageCollection(ImageCollectionABC):
         # Move the selected image
         self.canvas.moveto(canvas_image, new_x, new_y)
         
-        # Move the         
-        self.canvas.coords(self.highlight, new_x, new_y, 
-                            new_x + photo_image.width(), 
-                            new_y + photo_image.height())
+        # Move the highlight
+        self.move_highlight_to_selected_image()
 
         return new_x, new_y
 
@@ -79,6 +77,7 @@ class CanvasImageCollection(ImageCollectionABC):
     def select_image(self, nearest):
         assert nearest < len(self.photo_images), "Photo image index %d greater than number of photo images %d - 1" % (nearest, len(self.photo_images))
         self.image_selector.select_image(nearest)
+        self.move_highlight_to_selected_image()
 
     def release(self):
         self.image_selector.release()
