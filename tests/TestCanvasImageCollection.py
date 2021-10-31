@@ -19,8 +19,8 @@ class CanvasImageCollectionTest(unittest.TestCase):
         data_loader = FileSystemDataLoader(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_data/"))
         with data_loader as dl:
             for obj in dl:
-                sys.stderr.write("adding an image %s\n" % obj.filename)
-                self.civ.add_image(*obj.v, obj.w, obj.h, obj.filename)
+                sys.stderr.write("adding an image %s\n" % obj)
+                self.civ.add_image(*obj['v'], obj['w'], obj['h'], obj['filename'])
 
     def tearDown(self):
         self.root.destroy()

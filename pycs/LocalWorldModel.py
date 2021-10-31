@@ -8,9 +8,11 @@ logger = logging.getLogger("cs." + __name__)
 
 from PIL import ImageTk
 from pycs.interfaces.WorldModelABC import WorldModelABC
+from pycs.interfaces.WorldModelABC import WorldObjectABC
+
 from pycs.interfaces.DataLoaderABC import DataLoaderABC
 
-class WorldObject:
+class WorldObject(WorldObjectABC):
     """
     An entity; used to define data associated with any object in the world model.
 
@@ -23,28 +25,50 @@ class WorldObject:
     """
 
     def __init__(self, name, png, x, y, w, h):
-        self.name = name
-        self.png = png
-        self.v = [x, y]
-        self.w = w
-        self.h = h        
+        self._name = name
+        self._png = png
+        self._v = [x, y]
+        self._w = w
+        self._h = h        
         self.initialized = True
 
     @property
+    def data_dict(self):
+        return { "v": self._v, "w": self._w, "h": self._h, 
+                 "filename": self._png,
+                 "name": self._name }
+
+    @property
     def x(self):
-        return self.v[0]
+        return self._v[0]
     
     @x.setter
     def x(self, u):
-        self.v[0] = u
+        self._v[0] = u
 
     @property
     def y(self):
-        return self.v[1]
+        return self._v[1]
         
     @y.setter
     def y(self, u):
-        self.v[1] = u
+        self._v[1] = u
+
+    @property
+    def w(self):
+        return self._w
+
+    @property
+    def h(self):
+        return self._h
+
+    @property
+    def png(self):
+        return self._png
+
+    @property
+    def name(self):
+        return self._name
 
 class LocalWorldModel(WorldModelABC):
     """
@@ -57,19 +81,21 @@ class LocalWorldModel(WorldModelABC):
     def __init__(self, data_loader):
 
         self.world_objects = []
+        self.data_loader = data_loader
+
         with data_loader as dl:
             for obj in dl:
-                logger.debug("creating object %s with data x=%d y=%d w=%d h=%d" % (obj.name, *obj.v, obj.w, obj.h))
-                wo = WorldObject(obj.name, obj.filename, *obj.v, obj.w, obj.h)
+                logger.debug("creating object %s with data x=%d y=%d w=%d h=%d" % (obj['name'], *obj['v'], obj['w'], obj['h']))
+                wo = WorldObject(obj['name'], obj['filename'], *obj['v'], obj['w'], obj['h'])
                 self.world_objects.append(wo)
 
-    def __enter__(self):
-        return self
+#    def __enter__(self):
+#        return self
 
-    def __exit__(self, type, value, tb):
-        if tb:
-            print("".join(traceback.format_tb(tb)), type, value)
-        return self
+#    def __exit__(self, type, value, tb):
+#        if tb:
+#            print("".join(traceback.format_tb(tb)), type, value)
+#        return self
 
     def __iter__(self):
         for ent in self.world_objects:
@@ -84,6 +110,10 @@ class LocalWorldModel(WorldModelABC):
     def _index(self):
         # fast spatial index for retrieving objects
         pass
+
+    def save(self, fname):
+        logger.debug("saving world model!")
+        self.data_loader.write([wo.data_dict for wo in self.world_objects], fname)
     
     def update_object_x(self, i, new_x):
         self.world_objects[i].x = new_x
