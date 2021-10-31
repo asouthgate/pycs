@@ -69,11 +69,12 @@ class FileSystemDataLoader(DataLoaderABC):
     def write(self, encodeables, root_folder_name=None):
         """ Write encodeable objects to JSON. """
         if not os.path.isdir(root_folder_name):
-            raise Exception("%s is not an extant folder." % root_path)
+#            raise Exception("%s is not an extant folder." % root_folder_name)
+            os.mkdir(root_folder_name)
         fname = os.path.join(root_folder_name, "data.json") if root_folder_name else self.json_fpath
         with open(fname , "w") as of:
 #            json.dump(encodeables, of, cls=DataResourceJSONEncoder)
-            json.dump({"objects":encodeables}, of)
+            json.dump({"objects":encodeables}, of, indent=4, sort_keys=True)
             
 
 

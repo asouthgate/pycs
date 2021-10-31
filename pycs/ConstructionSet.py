@@ -174,9 +174,11 @@ class ConstructionSetApp:
             elif event == 'Open':
                 sfilename = sg.popup_get_file('file to open', no_window=True)
             elif event == 'Save':
-                sfilename = tkinter.filedialog.asksaveasfilename()
-                logger.debug("saving! %s" % sfilename)
-                pass
+#                sfilename = tkinter.filedialog.asksaveasfilename()
+                sfoldername = sg.popup_get_folder('folder to open', no_window=True)
+                if sfilename:
+                    logger.debug("saving! %s" % sfoldername)
+                    self.wm.save(sfoldername)
             elif event == 'Properties':
                 second_window()
             elif event == '-BMENU-':

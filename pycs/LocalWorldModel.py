@@ -35,7 +35,7 @@ class WorldObject(WorldObjectABC):
     @property
     def data_dict(self):
         return { "v": self._v, "w": self._w, "h": self._h, 
-                 "filename": self._png,
+                 "filename": self._png.split("/")[-1],
                  "name": self._name }
 
     @property
