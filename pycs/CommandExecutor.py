@@ -4,7 +4,6 @@ class CommandExecutor:
     """ Class used to manage execution of commands. """
 
     def __init__(self):
-        self.canvas = canvas
         # Inverse command history to record operations needed to undo
         self.command_history = []
         # Every undo operation pops from command_history and adds to undo_history for redo

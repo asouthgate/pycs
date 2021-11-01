@@ -7,6 +7,8 @@ logger = logging.getLogger("cs." + __name__)
 
 from pycs.interfaces.WorldModelABC import WorldModelABC
 from pycs.CanvasImageCollection import CanvasImageCollection
+from pycs.CommandExecutor import CommandExecutor
+import pycs.CSCommands as pycsCom
 
 class ConstructionSetApp:
 
@@ -72,6 +74,8 @@ class ConstructionSetApp:
             self.wi2ci[wi] = ci 
             self.ci2wi[ci] = wi
 
+        self.command_executor = CommandExecutor()
+
         # Input config
         self.m1_depressed = False
 
@@ -92,12 +96,15 @@ class ConstructionSetApp:
         def bring_forward(event):
             # TODO: z index needs to be defined by the worldmodel too
             logger.debug("bringing object forward")
-            self.image_collection.lift_focused_image()
+            command = pycsCom.ComLiftSelected(self.image_collection)
+            command.execute()
     
         def send_backward(event):
             # TODO: z index needs to be defined by the worldmodel too
             logger.debug("sending object backward")
-            self.image_collection.lower_focused_image()
+            command = pycsCom.ComLowerSelected(self.image_collection)
+            command.execute()
+#            self.image_collection.lower_focused_image()
 
         def tab_func(event):
             x, y = event.x, event.y

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class Command(ABC):
+class CommandABC(ABC):
     """ Interface for executed UI commands. 
     
     Command objects should be created with all the
@@ -13,5 +13,5 @@ class Command(ABC):
         pass
 
     @abstractmethod
-    def undo(self): -> None:
+    def undo(self) -> None:
         pass
