@@ -120,8 +120,10 @@ class ConstructionSetApp:
             logger.debug("duplicating object")
             x, y = event.x, event.y
             i = self.image_collection.get_selected()
-            wo = self.wm.duplicate_world_object(i, x, y)
-            tmp_image = self.image_collection.add_image(wo.png, x, y, w=wo.w, h=wo.h, anchor="nw")
+            command = pycsCom.ComDuplicate(self.image_collection, self.wm, i, x, y)
+#            wo = self.wm.duplicate_world_object(i, x, y)
+#            tmp_image = self.image_collection.add_image(wo.png, x, y, w=wo.w, h=wo.h, anchor="nw")
+            command.execute()
 
         def debug(event):
             logger.debug(event)
@@ -175,10 +177,12 @@ class ConstructionSetApp:
                 # tmp
                 currx = self.root.winfo_pointerx()
                 curry = self.root.winfo_pointery() 
-                new_x, new_y = self.image_collection.move_selected_image(currx, curry)
-                selected_image = self.image_collection.get_selected()
-                self.wm.update_object_x(selected_image, new_x)
-                self.wm.update_object_y(selected_image, new_y)
+                command = pycsCom.ComFinishMove(self.image_collection, self.wm, currx, curry, *self.image_collection.get_selection_origin())
+                command.execute()
+#                new_x, new_y = self.image_collection.move_selected_image(currx, curry)
+#                selected_image = self.image_collection.get_selected()
+#                self.wm.update_object_x(selected_image, new_x)
+#                self.wm.update_object_y(selected_image, new_y)
 
                 
             WIN_W, WIN_H = self.window.size

@@ -33,6 +33,9 @@ class CanvasImageCollection(ImageCollectionABC):
     def zoom(self):
         pass
 
+    def get_selection_origin(self):
+        return self.image_selector.origin_x, self.image_selector.origin_y
+
     def lift_focused_image(self):
         self.canvas.lift(self.highlight)
         self.canvas.lift(self.pi2ci[self.image_selector.focused_image])
