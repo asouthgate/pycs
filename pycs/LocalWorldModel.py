@@ -91,20 +91,12 @@ class LocalWorldModel(WorldModelABC):
                 wo = WorldObject(obj['name'], obj['filename'], *obj['v'], obj['w'], obj['h'])
                 self.world_objects.append(wo)
 
-#    def __enter__(self):
-#        return self
-
-#    def __exit__(self, type, value, tb):
-#        if tb:
-#            print("".join(traceback.format_tb(tb)), type, value)
-#        return self
-
     def __iter__(self):
         for ent in self.world_objects:
             yield ent
 
     def __getitem__(self, x):
-        pass
+        return self.world_objects[x]
    
     def __setitem__(self, x, v):
         pass

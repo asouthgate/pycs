@@ -92,8 +92,8 @@ class ConstructionSetApp:
             self.canvas.bind('<ISO_Left_Tab>', self._select_prev_image)
             self.canvas.bind('<KeyPress-D>', self._duplicate_selected_object)
             self.canvas.bind('<Control-KeyPress-s>', self._save)
-            self.canvas.bind('<Control-KeyPress-z>', self.command_executor.undo)
-            self.canvas.bind('<Control-Shift-KeyPress-z>', self.command_executor.redo)
+            self.canvas.bind('<Control-KeyPress-z>', lambda e: self.command_executor.undo())
+            self.canvas.bind('<Control-Shift-KeyPress-z>', lambda e: self.command_executor.redo())
             self.canvas.bind('<Up>', self._lift_selected)
             self.canvas.bind('<Down>', self._lower_selected)
             self.window.bind('<Configure>',"Configure")  
@@ -127,15 +127,17 @@ class ConstructionSetApp:
     def _click_m1(self, event):
         """ User clicks a point; trigger downstream events and make a record of the position. """
         logger.debug(event)
+
+        # A hack :(, near no way to get the canvas origin otherwise
+        if not self._CANVAS_ORIGIN:
+            x, y = self._get_canvas_cursor_coords()
+            self._CANVAS_ORIGIN = y - event.y 
+
         # Log that m1 is depressed
         self.m1_depressed = True
         
         # Get the position of the cursor
         x, y = self._get_canvas_cursor_coords()
-
-        # A hack :(
-        if not self._CANVAS_ORIGIN:
-            self._CANVAS_ORIGIN = y - event.y 
 
         # Register the click with the image_collection
         self.image_collection.click(x, y)
@@ -147,7 +149,7 @@ class ConstructionSetApp:
         selected_image = self.image_collection.select_image(nearest) 
     
         # Execute the command
-        command = pycsCom.ComFinishMove(self.image_collection, self.world_model, x, y, x, y, self.image_collection.get_selected())
+        command = pycsCom.ComFinishMove(self.image_collection, self.world_model, x, y, self.image_collection.get_selected())
         self.command_executor.execute(command)
 
     def _release_m1(self, event):
@@ -231,7 +233,7 @@ class ConstructionSetApp:
         # Move object if necessary
         if self.m1_depressed:
             currx, curry = self._get_canvas_cursor_coords()
-            command = pycsCom.ComFinishMove(self.image_collection, self.world_model, currx, curry, *self.image_collection.get_click_origin(), self.image_collection.get_selected())
+            command = pycsCom.ComFinishMove(self.image_collection, self.world_model, currx, curry, self.image_collection.get_selected())
             self.command_executor.pop_execute(command)
             
         logger.debug("Reading from the window")
