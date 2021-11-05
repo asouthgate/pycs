@@ -13,6 +13,10 @@ class ImageSelector:
         self.origin_y = None
         self.picked_up = False
 
+        # record position where click occurred
+        self.click_x = None
+        self.click_y = None
+
     @property
     def focused_image(self):
         logger.debug("getting focused image %d" % self._focused_image)
@@ -26,6 +30,8 @@ class ImageSelector:
     def click(self, x, y):
         self.origin_x = x
         self.origin_y = y
+        self.click_x = x
+        self.click_y = y
     
     def release(self):
         if self.picked_up:

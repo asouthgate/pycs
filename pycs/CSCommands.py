@@ -52,11 +52,12 @@ class ComDuplicate(CommandABC):
 
 class ComFinishMove(CommandABC):
     
-    def __init__(self, image_collection, world_model, newx, newy, startx, starty):
+    def __init__(self, image_collection, world_model, newx, newy, startx, starty, selected_image):
         self.startx = startx
         self.starty = starty
         self.newx = newx
         self.newy = newy
+        self.selected = selected_image
         self.image_collection = image_collection
         self.world_model = world_model
         
@@ -67,4 +68,9 @@ class ComFinishMove(CommandABC):
         self.world_model.update_object_y(selected_image, self.newy)
 
     def undo(self):
-        pass
+        self.image_collection.select_image(self.selected)
+        self.image_collection.snap_move_selected_image(self.startx, self.starty)
+        selected_image = self.image_collection.get_selected()
+        self.world_model.update_object_x(selected_image, self.startx)
+        self.world_model.update_object_y(selected_image, self.starty)
+

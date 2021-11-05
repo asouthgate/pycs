@@ -36,6 +36,9 @@ class CanvasImageCollection(ImageCollectionABC):
     def get_selection_origin(self):
         return self.image_selector.origin_x, self.image_selector.origin_y
 
+    def get_click_origin(self):
+        return self.image_selector.click_x, self.image_selector.click_y
+
     def lift_focused_image(self):
         self.canvas.lift(self.highlight)
         self.canvas.lift(self.pi2ci[self.image_selector.focused_image])
@@ -77,12 +80,32 @@ class CanvasImageCollection(ImageCollectionABC):
         new_y = y + dy
 
         # Move the selected image
-        self.canvas.moveto(canvas_image, new_x, new_y)
+        self.canvas.coords(canvas_image, new_x, new_y)
         
         # Move the highlight
         self.move_highlight_to_selected_image()
 
         return new_x, new_y
+
+    def snap_move_selected_image(self, pointer_x, pointer_y):
+        """ Move a selected image to exactly where the pointer is. """
+        photo_image_ind = self.image_selector.focused_image
+        photo_image = self.photo_images[photo_image_ind]
+        logger.debug("focused image is %s" % photo_image)
+#        assert photo_image_ind < len(self.photo_images), "Photo image index greater than number of photo images - 1"
+        canvas_image = self.pi2ci[photo_image_ind]
+
+        # Set a new origin
+        self.image_selector.origin_x = pointer_x
+        self.image_selector.origin_y = pointer_y
+
+        # Move the selected image
+        self.canvas.coords(canvas_image, pointer_x, pointer_y)
+        
+        # Move the highlight
+        self.move_highlight_to_selected_image()
+
+
 
     def click(self, x, y):
         self.image_selector.click(x, y)
@@ -91,6 +114,7 @@ class CanvasImageCollection(ImageCollectionABC):
 #        assert nearest < len(self.photo_images), "Photo image index %d greater than number of photo images %d - 1" % (nearest, len(self.photo_images))
         self.image_selector.select_image(nearest)
         self.move_highlight_to_selected_image()
+        return self.get_selected()
 
     def release(self):
         self.image_selector.release()
